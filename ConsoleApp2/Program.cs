@@ -19,51 +19,75 @@ namespace ConsoleApp2
             EventBasedNetListener listener = new EventBasedNetListener();
             NetManager client = new NetManager(listener);
             client.Start();
-            client.Connect("localhost" /* host ip or name */, 9050 /* port */, "SomeConnectionKey" /* text key or NetDataWriter */);
+            bool die = false;
+            var t = client.Connect("localhost" /* host ip or name */, 9050 /* port */, "SomeConnectionKey" /* text key or NetDataWriter */);
+
+            listener.PeerConnectedEvent += peer => 
+            {
+                Console.WriteLine($"Connected to {peer.EndPoint}");
+            };
+
+            listener.PeerDisconnectedEvent += (peer, info) =>
+            {
+                Console.WriteLine($"Connection to {peer.EndPoint} died cause {info.Reason}");
+                die = true;
+            };
+
             listener.NetworkReceiveEvent += (fromPeer, dataReader, deliveryMethod) =>
             {
                 Console.WriteLine("We got: {0}", dataReader.GetString(100 /* max length of string */));
                 dataReader.Recycle();
             };
-            pl mpl = new pl("Bob", 3);
-            _netPacketProcessor.RegisterNestedType<pl>(pl.reee);
+            pl mpl = new pl();
+            _netPacketProcessor.RegisterNestedType<pl>(() => new pl());
+            //_netPacketProcessor.SubscribeReusable<SamplePacket, NetPeer>(Ontest);
+
+            SamplePacket samPack = new SamplePacket { testPl = mpl };
+
+            _netPacketProcessor.SendNetSerializable<SamplePacket>(client, samPack, DeliveryMethod.ReliableOrdered);
+            //_netPacketProcessor.Write<pl>(dw, mpl);
+            //_netPacketProcessor.Send(t, samPack, DeliveryMethod.ReliableOrdered);
+            //client.SendToAll(_netPacketProcessor.Write(samPack), DeliveryMethod.ReliableOrdered);
+            //client.SendToAll(dw, DeliveryMethod.ReliableOrdered);
             while (!Console.KeyAvailable)
             {
                 client.PollEvents();
                 Thread.Sleep(15);
+                if (die)
+                    return;
             }
 
             client.Stop();
         }
+
+        public void Ontest(SamplePacket sp, NetPeer p)
+        {
+            Console.WriteLine("[Server] Received Packet!");
+        }
     }
 
-    struct spl : INetSerializable
+    class SamplePacket : INetSerializable
     {
-        public string Name { get; set; }
-        public int Tickets { get; set; }
+        public pl testPl { get; set; }
+
         public void Deserialize(NetDataReader reader)
         {
-            Name = reader.GetString();
-            Tickets = reader.GetInt();
+            testPl.Deserialize(reader);
         }
 
         public void Serialize(NetDataWriter writer)
         {
-            writer.Put(Tickets);
-            writer.Put(Name);
+            testPl.Serialize(writer);
         }
     }
 
     public class pl : INetSerializable
     {
-        spl thespl;
         public string Name { get; set; }
         public int Tickets { get; set; }
         public delegate pl reee();
-        public pl(string name, int tickets)
+        public pl()
         {
-            Name = name;
-            Tickets = tickets;
         }
         public void Deserialize(NetDataReader reader)
         {
