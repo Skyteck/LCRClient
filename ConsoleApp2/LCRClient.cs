@@ -1,4 +1,5 @@
-﻿using LiteNetLib;
+﻿using LCRLibrary;
+using LiteNetLib;
 using LiteNetLib.Utils;
 using System;
 using System.Collections.Generic;
@@ -39,7 +40,7 @@ namespace LCR
         public void OnNetworkReceive(NetPeer peer, NetPacketReader reader, DeliveryMethod deliveryMethod)
         {
             Console.WriteLine($"[Client {DateTime.Now}] Received data. Processing...");
-            //_netPacketProcessor.ReadAllPackets(dataReader, fromPeer); // LiteNetLib.Utils.ParseException: 'Undefined packet in NetDataReader'
+            _netPacketProcessor.ReadAllPackets(reader, peer); // LiteNetLib.Utils.ParseException: 'Undefined packet in NetDataReader'
         }
 
         public void OnNetworkReceiveUnconnected(IPEndPoint remoteEndPoint, NetPacketReader reader, UnconnectedMessageType messageType)
@@ -60,7 +61,7 @@ namespace LCR
 
         public void ProcessPacket(pl thePl, NetPeer peer)
         {
-
+            Console.WriteLine($"{thePl.Name} {thePl.Tickets}");
         }
     }
 

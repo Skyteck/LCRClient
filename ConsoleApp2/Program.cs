@@ -1,4 +1,5 @@
-﻿using LiteNetLib;
+﻿using LCRLibrary;
+using LiteNetLib;
 using LiteNetLib.Utils;
 using System;
 using System.Collections.Generic;
@@ -27,8 +28,9 @@ namespace LCR
             pl mpl = new pl { Name = "Bob", Tickets = 3};
             NetDataWriter dw = new NetDataWriter();
 
-            SamplePacket samPack = new SamplePacket { testPl = mpl };
+            SamplePacket samPack = new SamplePacket {  };
 
+            Thread.Sleep(100);
             do
             {
                 client.PollEvents();
